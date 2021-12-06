@@ -62,18 +62,16 @@ async function init() {
       const publicNameTag = publicNameTagObj.value
       const website = websiteObj.value
 
-      if (blockscanDB.get(address)) return // Tag already posted to API.
+      if (blockscanDB.get(address)) {
+        return // Tag already posted to API.
+      }
 
       console.info(`Posting ${address} tag to endpoint.`)
       try {
-        await fetch(`
-          https://repaddr.blockscan.com/reportaddressapi?apikey=${process.env.API_KEY}
-          &address=${address}
-          &chain=ETH
-          &actiontype=1
-          &comment=${publicNameTag}
-          &infourl=${website}
-        `)
+        const query = `
+          https://repaddr.blockscan.com/reportaddressapi?apikey=${process.env.API_KEY}&address=${address}&chain=ETH&actiontype=1&comment=${publicNameTag}&infourl=${website}
+        `
+        await fetch(query)
         blockscanDB.put(address, true)
         console.info(`Tag for ${address} posted.`)
       } catch (error) {
