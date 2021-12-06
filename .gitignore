@@ -1,5 +1,8 @@
 node_modules
 yarn-error.log
+# dotenv environment constiables file
 .env
+.env.*
+!.env.example
 .vscode
 db-*
