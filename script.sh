@@ -13,4 +13,4 @@ export NVM_DIR="/home/ubuntu/.nvm"
 
 echo "Using nvm version $(nvm --version)"
 echo "Using node version $(node --version)"
-yarn start
+yarn start:kovan
