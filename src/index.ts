@@ -57,10 +57,11 @@ async function init() {
   await Promise.all(
     newTags.map(async function postTag(tag) {
       const { props } = tag
-      const [addressObj, publicNameTagObj, , websiteObj] = props
+      const [addressObj, publicNameTagObj, publicNoteObj, websiteObj] = props
       const address = addressObj.value
       const publicNameTag = publicNameTagObj.value
       const website = websiteObj.value
+      const publicNote = publicNoteObj.value
 
       if (blockscanDB.get(address)) {
         return // Tag already posted to API.
@@ -69,7 +70,7 @@ async function init() {
       console.info(`Posting ${address} tag to endpoint.`)
       try {
         const query = `
-          https://repaddr.blockscan.com/reportaddressapi?apikey=${process.env.API_KEY}&address=${address}&chain=ETH&actiontype=1&comment=${publicNameTag}&infourl=${website}
+          https://repaddr.blockscan.com/reportaddressapi?apikey=${process.env.API_KEY}&address=${address}&chain=ETH&actiontype=1&customname=${publicNameTag}comment=${publicNote}&infourl=${website}
         `
         await fetch(query)
         blockscanDB.put(address, true)
