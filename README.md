@@ -32,7 +32,7 @@ yarn start:mainnet
 ```
 
 3- Give script execution rights `chmod +x script-mainnet.sh`.
-4- Setup the cron job: `crontab -e` and add `6 17 * * * cd ~/blockscan-tags && ./script-mainnet.sh >> output-mainnet.log 2>&1`
+4- Setup the cron job: `crontab -e` and add `0 * * * * cd ~/blockscan-tags && ./script-mainnet.sh >> output-mainnet.log 2>&1`
 
 ## Debugging
 
