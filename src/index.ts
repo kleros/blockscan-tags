@@ -54,32 +54,31 @@ async function init() {
     return
   }
 
-  await Promise.all(
-    newTags.map(async function postTag(tag) {
-      const { props } = tag
-      const [addressObj, publicNameTagObj, publicNoteObj, websiteObj] = props
-      const address = addressObj.value
-      const publicNameTag = publicNameTagObj.value
-      const website = websiteObj.value
-      const publicNote = publicNoteObj.value
+  for (const tag of newTags) {
+    const { props } = tag
+    const [addressObj, publicNameTagObj, publicNoteObj, websiteObj] = props
+    const address = addressObj.value || ``
+    const website = websiteObj.value || ``
+    const publicNote = publicNoteObj.value || ``
+    let publicNameTag = publicNameTagObj.value || ``
 
-      if (blockscanDB.get(address)) {
-        return // Tag already posted to API.
-      }
+    publicNameTag = publicNameTag.slice(0, 19)
 
-      console.info(`Posting ${address} tag to endpoint.`)
-      try {
-        const query = `
-          https://repaddr.blockscan.com/reportaddressapi?apikey=${process.env.API_KEY}&address=${address}&chain=ETH&actiontype=1&customname=${publicNameTag}comment=${publicNote}&infourl=${website}
+    if (blockscanDB.get(address)) {
+      return // Tag already posted to API.
+    }
+
+    try {
+      const query = `
+          https://repaddr.blockscan.com/reportaddressapi?apikey=${process.env.API_KEY}&address=${address}&chain=ETH&actiontype=1&customname=${publicNameTag}&comment=${publicNote}&infourl=${website}
         `
-        await fetch(query)
-        blockscanDB.put(address, true)
-        console.info(`Tag for ${address} posted.`)
-      } catch (error) {
-        console.error(`Failed to post tag for ${address}.`, error)
-      }
-    }),
-  )
+      const resp = await fetch(query)
+      console.info(await resp.json())
+      blockscanDB.put(address, true)
+    } catch (error) {
+      console.error(`Failed to post tag for ${address}.`, error)
+    }
+  }
 
   console.info(`Done processing tags.`)
 }
