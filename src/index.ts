@@ -57,16 +57,14 @@ async function init() {
   for (const tag of newTags) {
     const { props } = tag
     const [addressObj, publicNameTagObj, publicNoteObj, websiteObj] = props
-    const address = addressObj.value || ``
-    const website = websiteObj.value || ``
-    const publicNote = publicNoteObj.value || ``
-    let publicNameTag = publicNameTagObj.value || ``
+    const address = addressObj.value
+    const website = websiteObj.value
+    const publicNote = publicNoteObj.value
+    let publicNameTag = publicNameTagObj.value
 
-    publicNameTag = publicNameTag.slice(0, 19)
+    publicNameTag = publicNameTag ? publicNameTag.slice(0, 19) : publicNameTag
 
-    if (blockscanDB.get(address)) {
-      return // Tag already posted to API.
-    }
+    if (blockscanDB.get(address)) continue // Tag already posted to API.
 
     try {
       const query = `
