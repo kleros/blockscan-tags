@@ -58,11 +58,11 @@ async function init() {
     const { props } = tag
     const [addressObj, publicNameTagObj, publicNoteObj, websiteObj] = props
     const address = addressObj.value
-    const website = websiteObj.value
-    const publicNote = publicNoteObj.value
-    let publicNameTag = publicNameTagObj.value
+    const website = websiteObj.value || ``
+    const publicNote = publicNoteObj.value || ``
+    let publicNameTag = publicNameTagObj.value || ``
 
-    publicNameTag = publicNameTag ? publicNameTag.slice(0, 19) : publicNameTag
+    publicNameTag = publicNameTag.slice(0, 19)
 
     if (blockscanDB.get(address)) continue // Tag already posted to API.
 
