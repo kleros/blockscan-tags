@@ -65,6 +65,8 @@ async function init() {
     publicNameTag = publicNameTag.slice(0, 19)
 
     if (blockscanDB.get(address)) continue // Tag already posted to API.
+    if (publicNameTag.length > 20) continue // Exceeds max length.
+    if (publicNote.length === 0) continue // Mandatory field.
 
     const response = await fetch(process.env.GTCR_SUBGRAPH_URL as string, {
       method: 'POST',
@@ -82,7 +84,7 @@ async function init() {
     })
 
     const items = (await response.json()).data.itemSearch
-    if (items.length > 0) return // Duplicate.
+    if (items.length > 0) return // Duplicate, ignore.
 
     try {
       const query = `
