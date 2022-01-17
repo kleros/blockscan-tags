@@ -66,6 +66,24 @@ async function init() {
 
     if (blockscanDB.get(address)) continue // Tag already posted to API.
 
+    const response = await fetch(process.env.GTCR_SUBGRAPH_URL as string, {
+      method: 'POST',
+      body: JSON.stringify({
+        query: `
+          {
+            itemSearch(text: "${process.env.LIST_ADDRESS} & ${publicNameTag
+          .trim()
+          .replace(' ', ' & ')}:*") {
+              id
+            }
+          }
+        `,
+      }),
+    })
+
+    const items = (await response.json()).data.itemSearch
+    if (items.length > 0) return // Duplicate.
+
     try {
       const query = `
           https://repaddr.blockscan.com/reportaddressapi?apikey=${process.env.API_KEY}&address=${address}&chain=ETH&actiontype=1&customname=${publicNameTag}&comment=${publicNote}&infourl=${website}
