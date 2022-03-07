@@ -35,7 +35,7 @@ async function init() {
     `,
   }
 
-  let newTags: Tag[] = []
+  let registeredTags: Tag[] = []
   try {
     console.info(`Fetching registered tags from subgraph...`)
     const response = await fetch(process.env.GTCR_SUBGRAPH_URL as string, {
@@ -47,14 +47,14 @@ async function init() {
     const { data } = await response.json()
 
     const { clearingRequested, registered } = data
-    newTags = newTags.concat(clearingRequested).concat(registered)
-    console.info(`Got ${newTags.length} registered tags.`)
+    registeredTags = registeredTags.concat(clearingRequested).concat(registered)
+    console.info(`Got ${registeredTags.length} registered tags.`)
   } catch (error) {
     console.error(`Failed to fetch items`, error)
     return
   }
 
-  for (const tag of newTags) {
+  for (const tag of registeredTags) {
     const { props } = tag
     const [addressObj, publicNameTagObj, publicNoteObj, websiteObj] = props
     const address = addressObj.value
@@ -69,28 +69,33 @@ async function init() {
     if (publicNameTag.length > 33) continue // Exceeds max length.
     if (publicNote.length === 0) continue // Mandatory field.
 
-    const response = await fetch(process.env.GTCR_SUBGRAPH_URL as string, {
-      method: 'POST',
-      body: JSON.stringify({
-        query: `
-          {
-            itemSearch(text: "${process.env.LIST_ADDRESS} & ${publicNameTag
-          .trim()
-          .replace(' ', ' & ')}:*") {
-              id
-            }
-          }
-        `,
-      }),
-    })
+    const duplicateQuery = `
+      {
+        itemSearch(text: "${process.env.LIST_ADDRESS} & '${publicNameTag
+      .trim()
+      .replace(' ', ' & ')}':*", status:  Registered) {
+          id
+        }
+      }
+    `
+    const response = await (
+      await fetch(process.env.GTCR_SUBGRAPH_URL as string, {
+        method: 'POST',
+        body: JSON.stringify({
+          query: duplicateQuery,
+        }),
+      })
+    ).json()
 
-    const items = (await response.json()).data.itemSearch
-    if (items.length > 0) return // Duplicate, ignore.
+    const { data } = response
+    const { itemSearch: items } = data
+
+    if (items.length > 1) continue // Duplicate, ignore.
 
     try {
       const query = `
-          https://repaddr.blockscan.com/reportaddressapi?apikey=${process.env.API_KEY}&address=${address}&chain=ETH&actiontype=1&customname=${publicNameTag}&comment=${publicNote}&infourl=${website}
-        `
+          https://repaddr.blockscan.com/reportaddressapi?apikey=${process.env.API_KEY}&address=${address}&chain=ETH&actiontype=1&customname=${publicNameTag}&comment=${publicNote}&infourl=${website}        `
+
       const resp = await fetch(query)
       console.info(await resp.json())
       blockscanDB.put(address, true)
