@@ -62,10 +62,11 @@ async function init() {
     const publicNote = publicNoteObj.value || ``
     let publicNameTag = publicNameTagObj.value || ``
 
-    publicNameTag = publicNameTag.slice(0, 19)
+    publicNameTag = publicNameTag.slice(0, 33)
 
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) continue // Not an ETH address.
     if (blockscanDB.get(address)) continue // Tag already posted to API.
-    if (publicNameTag.length > 20) continue // Exceeds max length.
+    if (publicNameTag.length > 33) continue // Exceeds max length.
     if (publicNote.length === 0) continue // Mandatory field.
 
     const response = await fetch(process.env.GTCR_SUBGRAPH_URL as string, {
