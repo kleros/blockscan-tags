@@ -1,53 +1,32 @@
 import fetch from 'node-fetch'
 import { open } from 'lmdb' // or require
+import conf from './config'
+import tagsFromEndpoint from './tagsFromEndpoint'
+import { Tag } from './types'
 
-interface Prop {
-  value: string
-}
-interface Tag {
-  props: Prop[]
-}
-
+// CHAIN_ID === 1: production, else staging.
 const blockscanDB = open({
-  path: `db-${process.env.CHAIN_ID as string}`,
+  path: `db-${conf.CHAIN_ID}`,
 })
 
-async function init() {
-  const subgraphQuery = {
-    query: `
-      {
-        registered: litems(where: { registryAddress: "${(
-          process.env.LIST_ADDRESS as string
-        ).toLowerCase()}", status:  Registered }) {
-          props {
-            value
-          }
-        }
-        clearingRequested: litems(where: { registryAddress: "${(
-          process.env.LIST_ADDRESS as string
-        ).toLowerCase()}", status:  ClearingRequested }) {
-          props {
-            value
-          }
-        }
-      }
+const nameTagDB = open({
+  path: `db-tag-${conf.CHAIN_ID}`,
+})
 
-    `,
-  }
-
+const init = async () => {
   let registeredTags: Tag[] = []
   try {
-    console.info(`Fetching registered tags from subgraph...`)
-    const response = await fetch(process.env.GTCR_SUBGRAPH_URL as string, {
-      method: 'POST',
-      body: JSON.stringify(subgraphQuery),
-    })
-    console.info('Done.')
-
-    const { data } = await response.json()
-
-    const { clearingRequested, registered } = data
-    registeredTags = registeredTags.concat(clearingRequested).concat(registered)
+    console.info(`Fetching registered tags from mainnet subgraph...`)
+    const mainnetTags = await tagsFromEndpoint(
+      conf.MAINNET_GTCR_SUBGRAPH_URL,
+      conf.MAINNET_LIST_ADDRESS,
+    )
+    console.info(`Fetching registered tags from xdai subgraph...`)
+    const xdaiTags = await tagsFromEndpoint(
+      conf.XDAI_GTCR_SUBGRAPH_URL,
+      conf.XDAI_LIST_ADDRESS,
+    )
+    registeredTags = registeredTags.concat(mainnetTags).concat(xdaiTags)
     console.info(`Got ${registeredTags.length} registered tags.`)
   } catch (error) {
     console.error(`Failed to fetch items`, error)
@@ -65,40 +44,27 @@ async function init() {
     publicNameTag = publicNameTag.slice(0, 35)
 
     if (!/^0x[a-fA-F0-9]{40}$/.test(address)) continue // Not an ETH address.
-    if (blockscanDB.get(address)) continue // Tag already posted to API.
+    if (blockscanDB.get(address.toLowerCase())) continue // Address already posted to API.
     if (publicNameTag.length > 35) continue // Exceeds max length.
     if (publicNote.length === 0) continue // Mandatory field.
-
-    const duplicateQuery = `
-      {
-        itemSearch(text: "${process.env.LIST_ADDRESS} & '${publicNameTag
-      .trim()
-      .replace(' ', ' & ')}':*", status:  Registered) {
-          id
-        }
-      }
-    `
-    const response = await (
-      await fetch(process.env.GTCR_SUBGRAPH_URL as string, {
-        method: 'POST',
-        body: JSON.stringify({
-          query: duplicateQuery,
-        }),
-      })
-    ).json()
-
-    const { data } = response
-    const { itemSearch: items } = data
-
-    if (items.length > 1) continue // Duplicate, ignore.
+    if (nameTagDB.get(publicNameTag.toLowerCase())) continue // Exact name tag already posted.
 
     try {
       const query = `
-          https://repaddr.blockscan.com/reportaddressapi?apikey=${process.env.API_KEY}&address=${address}&chain=ETH&actiontype=1&customname=${publicNameTag}&comment=${publicNote}&infourl=${website}        `
-
-      const resp = await fetch(query)
-      console.info(await resp.json())
-      blockscanDB.put(address, true)
+          https://repaddr.blockscan.com/reportaddressapi?apikey=${conf.API_KEY}&address=${address}&chain=ETH&actiontype=1&customname=${publicNameTag}&comment=${publicNote}&infourl=${website}`
+      if (conf.CHAIN_ID === '1') {
+        const resp = await fetch(query)
+        console.info(await resp.json())
+        blockscanDB.putSync(address.toLowerCase(), true)
+        nameTagDB.putSync(publicNameTag.toLowerCase(), true)
+      } else {
+        console.info(
+          "Staging. Query, address, and nameTag saved would've been:",
+        )
+        console.info(query)
+        console.info(address.toLowerCase())
+        console.info(publicNameTag.toLowerCase())
+      }
     } catch (error) {
       console.error(`Failed to post tag for ${address}.`, error)
     }

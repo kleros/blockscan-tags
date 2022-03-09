@@ -15,7 +15,8 @@
     "deleteDBs": "rimraf ./db-*",
     "lint:secrets": "secretlint \"**/*\"",
     "lint:fix": "eslint 'src/**/*.{js,ts}' --fix && tsc --noEmit && npm run lint:secrets",
-    "release": "standard-version"
+    "release": "standard-version",
+    "migrateDb": "env-cmd -f .env.mainnet ts-node src/dbMigrator.ts"
   },
   "commitlint": {
     "extends": [
