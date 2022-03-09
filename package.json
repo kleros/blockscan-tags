@@ -54,7 +54,7 @@
     "dotenv-safe": "^8.2.0",
     "env-cmd": "^10.1.0",
     "lmdb": "^2.0.1",
-    "node-fetch": "^2.6.0"
+    "node-fetch": "^2.6.7"
   },
   "volta": {
     "node": "16.13.1",
