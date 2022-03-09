@@ -1,6 +1,6 @@
 {
   "name": "blockscan-tags",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Pulls tags from curate and publishes them to blockscan.",
   "main": "src/index.ts",
   "repository": "git+https://github.com/kleros/blockscan-tags",
