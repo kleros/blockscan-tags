@@ -13,7 +13,7 @@ const nameTagDB = open({
   path: `db-tag-${conf.CHAIN_ID}`,
 })
 
-async function init() {
+const init = async () => {
   let registeredTags: Tag[] = []
   try {
     console.info(`Fetching registered tags from mainnet subgraph...`)
@@ -47,7 +47,7 @@ async function init() {
     if (blockscanDB.get(address.toLowerCase())) continue // Address already posted to API.
     if (publicNameTag.length > 35) continue // Exceeds max length.
     if (publicNote.length === 0) continue // Mandatory field.
-    if (nameTagDB.get(publicNameTag)) continue // Exact name tag already posted.
+    if (nameTagDB.get(publicNameTag.toLowerCase())) continue // Exact name tag already posted.
 
     try {
       const query = `
@@ -56,7 +56,7 @@ async function init() {
         const resp = await fetch(query)
         console.info(await resp.json())
         blockscanDB.putSync(address.toLowerCase(), true)
-        nameTagDB.putSync(publicNameTag, true)
+        nameTagDB.putSync(publicNameTag.toLowerCase(), true)
       } else {
         console.info(
           "Staging. Query, address, and nameTag saved would've been:",
