@@ -4,14 +4,8 @@ import conf from './config'
 import tagsFromEndpoint from './tagsFromEndpoint'
 import { Tag } from './types'
 
-// CHAIN_ID === 1: production, else staging.
-const blockscanDB = open({
-  path: `db-${conf.CHAIN_ID}`,
-})
-
-const nameTagDB = open({
-  path: `db-tag-${conf.CHAIN_ID}`,
-})
+const blockscanDB = open({ path: 'db-1' })
+const nameTagDB = open({ path: 'db-tag-1' })
 
 const init = async () => {
   let registeredTags: Tag[] = []
@@ -52,14 +46,14 @@ const init = async () => {
     try {
       const query = `
           https://repaddr.blockscan.com/reportaddressapi?apikey=${conf.API_KEY}&address=${address}&chain=ETH&actiontype=1&customname=${publicNameTag}&comment=${publicNote}&infourl=${website}`
-      if (conf.CHAIN_ID === '1') {
+      if (conf.NODE_ENV === 'production') {
         const resp = await fetch(query)
         console.info(await resp.json())
         blockscanDB.putSync(address.toLowerCase(), true)
         nameTagDB.putSync(publicNameTag.toLowerCase(), true)
       } else {
         console.info(
-          "Staging. Query, address, and nameTag saved would've been:",
+          "development mode. address and nameTag saved would've been:",
         )
         console.info(query)
         console.info(address.toLowerCase())

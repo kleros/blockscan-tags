@@ -3,7 +3,7 @@ interface Config {
   MAINNET_LIST_ADDRESS: string
   XDAI_GTCR_SUBGRAPH_URL: string
   XDAI_LIST_ADDRESS: string
-  CHAIN_ID: string
+  NODE_ENV: string
   API_KEY: string
 }
 
